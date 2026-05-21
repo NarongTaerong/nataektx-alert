@@ -18,7 +18,7 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 # ── 검색 조건 (원하는 대로 수정하세요) ────────────────────
 DEPARTURE = os.environ.get("DEPARTURE", "부산")   # 출발역
 ARRIVAL   = os.environ.get("ARRIVAL",   "서울")   # 도착역
-DATE      = os.environ.get("DATE",      "20250601")  # 날짜 YYYYMMDD
+DATE      = os.environ.get("DATE",      "20260523")  # 날짜 YYYYMMDD
 DEP_TIME  = os.environ.get("DEP_TIME",  "000000")    # 출발 시각 이후 (000000 = 전체)
 
 # 역 코드 매핑
