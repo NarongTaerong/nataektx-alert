@@ -33,5 +33,5 @@ jobs:
           DEPARTURE:        "부산"
           ARRIVAL:          "서울"
           DATE:             "20260523"   # YYYYMMDD
-          DEP_TIME:         "000000"     # 이 시각 이후 열차 조회
+          DEP_TIME:         "060000"     # 이 시각 이후 열차 조회
         run: python ktx_checker.py
