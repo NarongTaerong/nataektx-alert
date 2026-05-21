@@ -1,27 +1,24 @@
 """
-KTX 취소표 알림 봇
-코레일 API를 통해 취소표를 조회하고 텔레그램으로 알림을 전송합니다.
+KTX 취소표 알림 봇 v2
+코레일 웹사이트 API를 통해 취소표를 조회하고 텔레그램으로 알림을 전송합니다.
 """
-
+ 
 import os
-import time
 import json
 import requests
 from datetime import datetime
-
+ 
 # ── 환경 변수 ──────────────────────────────────────────────
 KORAIL_ID = os.environ["KORAIL_ID"]
 KORAIL_PW = os.environ["KORAIL_PW"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-
-# ── 검색 조건 (원하는 대로 수정하세요) ────────────────────
-DEPARTURE = os.environ.get("DEPARTURE", "부산")   # 출발역
-ARRIVAL   = os.environ.get("ARRIVAL",   "서울")   # 도착역
-DATE      = os.environ.get("DATE",      "20260523")  # 날짜 YYYYMMDD
-DEP_TIME  = os.environ.get("DEP_TIME",  "000000")    # 출발 시각 이후 (000000 = 전체)
-
-# 역 코드 매핑
+ 
+DEPARTURE = os.environ.get("DEPARTURE", "부산")
+ARRIVAL   = os.environ.get("ARRIVAL",   "서울")
+DATE      = os.environ.get("DATE",      "20260523")
+DEP_TIME  = os.environ.get("DEP_TIME",  "000000")
+ 
 STATION_CODE = {
     "서울": "0001", "용산": "0002", "영등포": "0003", "수원": "0005",
     "천안아산": "0010", "오송": "0015", "대전": "0020", "김천구미": "0025",
@@ -29,48 +26,60 @@ STATION_CODE = {
     "광명": "0044", "공주": "0096", "익산": "0047", "정읍": "0048",
     "광주송정": "0049", "나주": "0050", "목포": "0051",
 }
-
+ 
 BASE_URL = "https://smart.letskorail.com/classes/com.korail.mobile"
-
+ 
 HEADERS = {
-    "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 11; SM-G991B Build/RP1A.200720.012)",
+    "User-Agent": "korail2/2.0 (iPhone; iOS 16.0; Scale/3.00)",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Accept": "application/json",
 }
-
+ 
 session = requests.Session()
 session.headers.update(HEADERS)
-
-
+ 
+ 
+def now():
+    return datetime.now().strftime("%H:%M:%S")
+ 
+ 
 # ── 코레일 로그인 ──────────────────────────────────────────
-def login() -> bool:
+def login():
     url = f"{BASE_URL}.common.login"
     payload = {
         "txtMemberNo": KORAIL_ID,
         "txtPwd":      KORAIL_PW,
-        "Device":      "A",
-        "Version":     "230901001",
+        "Device":      "I",
+        "Version":     "231001001",
+        "key":         "korail1234567890",
     }
-    r = session.post(url, data=payload, timeout=10)
-    data = r.json()
-    success = data.get("strResult") == "SUCC"
-    if success:
-        print(f"[{now()}] ✅ 로그인 성공")
-    else:
-        print(f"[{now()}] ❌ 로그인 실패: {data.get('strMsg', '')}")
-    return success
-
-
+    try:
+        r = session.post(url, data=payload, timeout=15)
+        print(f"[{now()}] 로그인 응답 코드: {r.status_code}")
+        print(f"[{now()}] 로그인 응답 내용: {r.text[:200]}")
+        data = r.json()
+        success = data.get("strResult") == "SUCC"
+        if success:
+            print(f"[{now()}] ✅ 로그인 성공")
+        else:
+            print(f"[{now()}] ❌ 로그인 실패: {data.get('strMsg', '알 수 없는 오류')}")
+        return success
+    except Exception as e:
+        print(f"[{now()}] ❌ 로그인 예외: {e}")
+        return False
+ 
+ 
 # ── 열차 조회 ──────────────────────────────────────────────
-def search_trains() -> list[dict]:
+def search_trains():
     url = f"{BASE_URL}.seatMovie.ScheduleMovie"
     dep_code = STATION_CODE.get(DEPARTURE, DEPARTURE)
-    arr_code = STATION_CODE.get(ARRIVAL,   ARRIVAL)
+    arr_code = STATION_CODE.get(ARRIVAL, ARRIVAL)
     payload = {
         "txtGoAbrdDt":    DATE,
         "txtGoHour":      DEP_TIME,
         "txtGoStart":     dep_code,
         "txtGoEnd":       arr_code,
-        "txtPsgFlg_1":    "1",   # 어른 1명
+        "txtPsgFlg_1":    "1",
         "txtPsgFlg_2":    "0",
         "txtPsgFlg_3":    "0",
         "txtPsgFlg_4":    "0",
@@ -78,29 +87,31 @@ def search_trains() -> list[dict]:
         "txtSeatAttCd_2": "000",
         "txtSeatAttCd_3": "000",
         "txtSeatAttCd_4": "015",
-        "txtTrnGpCd":     "100",  # KTX
+        "txtTrnGpCd":     "100",
         "KR":             "Y",
-        "Device":         "A",
-        "Version":        "230901001",
+        "Device":         "I",
+        "Version":        "231001001",
+        "key":            "korail1234567890",
     }
-    r = session.post(url, data=payload, timeout=10)
-    data = r.json()
-    return data.get("trnsRVList", [])
-
-
+    try:
+        r = session.post(url, data=payload, timeout=15)
+        print(f"[{now()}] 열차조회 응답 코드: {r.status_code}")
+        print(f"[{now()}] 열차조회 응답 내용: {r.text[:300]}")
+        data = r.json()
+        return data.get("trnsRVList", [])
+    except Exception as e:
+        print(f"[{now()}] ❌ 열차조회 예외: {e}")
+        return []
+ 
+ 
 # ── 취소표 필터링 ──────────────────────────────────────────
-def find_available(trains: list[dict]) -> list[dict]:
+def find_available(trains):
     available = []
     for t in trains:
-        # 특실/일반실 매진 여부
-        special_sold = t.get("stndFlg") == "N"     # 특실
-        general_sold = t.get("gnrmFlg") == "N"     # 일반실
-
+        special_sold = t.get("stndFlg") == "N"
+        general_sold = t.get("gnrmFlg") == "N"
         has_seat = not special_sold or not general_sold
-
-        # 예약 대기(취소표) 가능 여부
         rsv_wait = t.get("rsvWaitFlg", "N")
-
         if has_seat or rsv_wait == "Y":
             available.append({
                 "열차번호": t.get("trnNo", ""),
@@ -111,10 +122,10 @@ def find_available(trains: list[dict]) -> list[dict]:
                 "예약대기": "✅ 가능"     if rsv_wait == "Y"  else "❌ 불가",
             })
     return available
-
-
+ 
+ 
 # ── 텔레그램 전송 ──────────────────────────────────────────
-def send_telegram(message: str) -> bool:
+def send_telegram(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id":    TELEGRAM_CHAT_ID,
@@ -123,9 +134,9 @@ def send_telegram(message: str) -> bool:
     }
     r = requests.post(url, json=payload, timeout=10)
     return r.ok
-
-
-def format_message(trains: list[dict]) -> str:
+ 
+ 
+def format_message(trains):
     header = (
         f"🚄 <b>KTX 취소표 알림</b>\n"
         f"📍 {DEPARTURE} → {ARRIVAL}\n"
@@ -147,33 +158,29 @@ def format_message(trains: list[dict]) -> str:
         )
     footer = "👉 <a href='https://www.letskorail.com'>코레일 바로가기</a>"
     return header + body + footer
-
-
-def now() -> str:
-    return datetime.now().strftime("%H:%M:%S")
-
-
+ 
+ 
 # ── 메인 ───────────────────────────────────────────────────
 def main():
     print(f"[{now()}] KTX 취소표 확인 시작 | {DEPARTURE}→{ARRIVAL} | {DATE}")
-
+ 
     if not login():
         send_telegram("⚠️ 코레일 로그인에 실패했습니다. 아이디/비밀번호를 확인하세요.")
         return
-
+ 
     trains = search_trains()
     print(f"[{now()}] 조회된 열차 수: {len(trains)}")
-
+ 
     available = find_available(trains)
     print(f"[{now()}] 예매 가능 열차 수: {len(available)}")
-
+ 
     if available:
         msg = format_message(available)
         ok = send_telegram(msg)
         print(f"[{now()}] 텔레그램 전송: {'성공' if ok else '실패'}")
     else:
         print(f"[{now()}] 예매 가능한 열차 없음 — 알림 미전송")
-
-
+ 
+ 
 if __name__ == "__main__":
     main()
