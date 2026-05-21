@@ -14,7 +14,7 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 DEPARTURE = os.environ.get("DEPARTURE", "부산")
 ARRIVAL   = os.environ.get("ARRIVAL",   "서울")
-DATE      = os.environ.get("DATE",      "20250523")
+DATE      = os.environ.get("DATE",      "20260523")
 DEP_TIME  = os.environ.get("DEP_TIME",  "060000")
 ARR_TIME  = os.environ.get("ARR_TIME",  "090000")  # 이 시각 이전 출발 열차만
 
