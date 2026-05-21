@@ -32,6 +32,6 @@ jobs:
           # ── 아래 값을 원하는 대로 수정하세요 ──
           DEPARTURE:        "부산"
           ARRIVAL:          "서울"
-          DATE:             "20250601"   # YYYYMMDD
+          DATE:             "20260523"   # YYYYMMDD
           DEP_TIME:         "000000"     # 이 시각 이후 열차 조회
         run: python ktx_checker.py
