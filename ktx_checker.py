@@ -146,6 +146,12 @@ def parse_html_trains(html):
 def find_available(trains):
     available = []
     for t in trains:
+        # 출발 시각 필터 (0600 ~ 0900 사이만)
+        dep = t.get("dptTm", t.get("출발시각", "0000"))
+        dep_hour = int(dep[:2]) if len(dep) >= 2 else 0
+        if not (6 <= dep_hour <= 9):
+            continue
+
         special_sold = t.get("stndFlg") == "N"
         general_sold = t.get("gnrmFlg") == "N"
         has_seat = not special_sold or not general_sold
