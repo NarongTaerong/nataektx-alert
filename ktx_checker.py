@@ -15,8 +15,8 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 DEPARTURE = os.environ.get("DEPARTURE", "부산")
 ARRIVAL   = os.environ.get("ARRIVAL",   "서울")
-DATE      = os.environ.get("DATE",      "20260524")
-DEP_TIME  = os.environ.get("DEP_TIME",  "000000")
+DATE      = os.environ.get("DATE",      "20260523")
+DEP_TIME  = os.environ.get("DEP_TIME",  "060000")
 
 STATION_CODE = {
     "서울": "0001", "용산": "0002", "영등포": "0003", "수원": "0005",
